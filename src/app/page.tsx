@@ -1,7 +1,9 @@
 'use client';
-import { useState, useEffect, JSX } from 'react';
+import { useState, useEffect, useRef } from 'react'; // ADDED: Import useRef
 import { Poppins } from 'next/font/google';
 import Skeleton from 'react-loading-skeleton';
+import { Heart } from "@deemlol/next-icons";
+import { FaHeart } from "react-icons/fa6";
 
 const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
   try {
@@ -104,7 +106,6 @@ export default function Home() {
   const [time, setTime] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [is24Hour, setIs24Hour] = useState(false);
-  const [favourites, setFavourites] = useState<string[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [suggestions, setSuggestions] = useState<City[]>([]);
   const [weatherDescription, setWeatherDescription] = useState<string | null>(null);
@@ -112,7 +113,11 @@ export default function Home() {
   const [tempMax, setTempMax] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
   const [personal, setPersonal] = useState<number | null>(null);
+  const [favourites, setFavourites] = useState<string[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // ADDED: Create a ref for the search container (input + suggestions)
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -173,14 +178,6 @@ export default function Home() {
     const stored = localStorage.getItem('favourites');
     if (stored) setFavourites(JSON.parse(stored));
   }, []);
-
-  const addToFavourites = (city: string) => {
-    if (!favourites.includes(city)) {
-      const updated = [...favourites, city];
-      setFavourites(updated);
-      localStorage.setItem('favourites', JSON.stringify(updated));
-    }
-  };
 
   const fetchWeather = async () => {
     if (!city.trim()) {
@@ -368,6 +365,46 @@ export default function Home() {
     console.log("Suggestions updated:", suggestions);
   }, [suggestions]);
 
+
+  // favourites added now
+  useEffect(() => {
+    const saved = localStorage.getItem("favorites");
+    if (saved) {
+      setFavourites(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("favourites", JSON.stringify(favourites));
+  }, [favourites]);
+
+  const addToFavourites = (city: string) => {
+    if (!favourites.includes(city)) {
+      const updated = [...favourites, city];
+      setFavourites(updated);
+      localStorage.setItem('favourites', JSON.stringify(updated));
+    }
+  };
+
+  // ADDED: New useEffect for handling clicks outside the search container
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // If the click is outside the search container, clear suggestions
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Clean up event listener when component unmounts
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchContainerRef]);
+
+
   return (
     <div className="flex flex-col bg-white w-full h-screen">
       <nav className="flex justify-between items-center h-12 w-full lg:14 px-2 lg:px-3 pr-1 ">
@@ -378,7 +415,8 @@ export default function Home() {
           </p>
         </div>
         <div className={`flex items-center gap-5 text-black cursor-pointer ${poppins.className}`}>
-          <div className="flex lg:flex sm:flex items-center gap-2 px-4 text-sm hidden sm:block lg:block">
+          {/* ADDED: Apply ref here for larger screens */}
+          <div className="flex lg:flex sm:flex items-center gap-2 px-4 text-sm hidden sm:block lg:block" ref={searchContainerRef}>
             <>
               {loading ? (
                 <Skeleton width="80%" height={30} />
@@ -406,6 +444,15 @@ export default function Home() {
                         }
                       }
                     }}
+                    // ADDED: onFocus handler to show suggestions when input is focused
+                    onFocus={() => {
+                      if (city.length > 0) {
+                        const filtered = cities.filter((c) =>
+                          c.name.toLowerCase().startsWith(city.toLowerCase())
+                        );
+                        setSuggestions(filtered.slice(0, 10));
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         fetchWeather();
@@ -417,7 +464,7 @@ export default function Home() {
                   />
 
                   {suggestions.length > 0 && (
-                    <ul className="absolute top-11 left-220 lg:w-60 lg:left-220 md:left-94 md:w-45 bg-white border border-gray-300 z-50 shadow-lg rounded-md">
+                    <ul className="absolute md:top-11 left-220 lg:w-auto lg:left-217 md:left-91 md:h-auto md:top-[40px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
@@ -444,6 +491,7 @@ export default function Home() {
                   onClick={() => {
                     fetchWeather();
                     setCity('');
+                    setSuggestions([]);
                   }}
                   className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
                 >
@@ -454,7 +502,15 @@ export default function Home() {
           </div>
           <div className='flex flex-col items-end gap-1'>
             <div className='flex justify-between w-full'>
-              <img src="/star.png" alt="favourites" className='h-4 sm:h-6 lg:h-4 flex sm:block block' />
+              {/* <img src="/star.png" alt="favourites" className='h-4 sm:h-6 lg:h-4 flex sm:block block' /> */}
+              {loading ? (
+                <Skeleton className='h-5 w-10 rounded-full' />
+              ) : (
+                <button>
+                  <FaHeart />
+                </button>
+
+              )}
               <p className="text-xs flex justify-end hidden lg:flex" onClick={toggleTimeFormat}>{time}</p>
             </div>
             <p className="text-[10px] text-sm text-lg">{date}</p>
@@ -472,7 +528,8 @@ export default function Home() {
               </p>
             ) : null}
           </div>
-          <div className="flex relative w-full bg-red-00 lg:hidden sm:hidden items-center justify-end gap-2 pl-[140px] text-sm py-2">
+          {/* ADDED: Apply ref here for smaller screens */}
+          <div className="flex relative w-full bg-red-00 lg:hidden sm:hidden items-center justify-end gap-2 pl-[140px] text-sm py-2" ref={searchContainerRef}>
             <>
               {loading ? (
                 <Skeleton width="80%" height={30} />
@@ -500,6 +557,15 @@ export default function Home() {
                         }
                       }
                     }}
+                    // ADDED: onFocus handler to show suggestions when input is focused
+                    onFocus={() => {
+                      if (city.length > 0) {
+                        const filtered = cities.filter((c) =>
+                          c.name.toLowerCase().startsWith(city.toLowerCase())
+                        );
+                        setSuggestions(filtered.slice(0, 10));
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         fetchWeather();
@@ -511,7 +577,7 @@ export default function Home() {
                   />
 
                   {suggestions.length > 0 && (
-                    <ul className={`absolute bg-white text-black top-11 h-auto left-35 lg:w-60 lg:left-220 md:left-94 md:w-45 border border-gray-300 z-50 shadow-lg rounded-md ${poppins.className}`}>
+                    <ul className={`absolute bg-white text-black top-11 h-auto left-[140px] border border-gray-300 z-50 shadow-lg rounded-md ${poppins.className}`}>
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
@@ -538,6 +604,7 @@ export default function Home() {
                   onClick={() => {
                     fetchWeather();
                     setCity('');
+                    setSuggestions([]);
                   }}
                   className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
                 >
@@ -561,7 +628,9 @@ export default function Home() {
             </p>
             <div className='lg:mt-1 sm:mt-1 text-end'>
               {loading ? (
-                <Skeleton height={30} width={40} />
+                <>
+                  <Skeleton height="30px" width="100px" />
+                </>
               ) : (
                 <p className={`text-black text-[6px] lg:text-[10px] sm:text-[8px] ${poppins.className}`}>
                   Humidity: {humidity}%
@@ -575,9 +644,9 @@ export default function Home() {
             <Skeleton height={20} width={40} />
           ) : (
             <div className='bg-green-00 flex px-2 py-3 sm:hidden lg:hidden justify-end items-center ml-2'>
-            <p className={`bg-red-00 text-black text-5xl ${poppins.className}`}>
-              {weatherDescription}
-            </p>
+              <p className={`bg-red-00 text-black text-5xl ${poppins.className}`}>
+                {weatherDescription}
+              </p>
             </div>
           )}
         </div>
