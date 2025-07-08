@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react'; // ADDED: Import useRef
 import { Poppins } from 'next/font/google';
 import Skeleton from 'react-loading-skeleton';
 import { FaHeart } from "react-icons/fa6";
@@ -504,7 +504,6 @@ export default function Home() {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -750,6 +749,7 @@ export default function Home() {
           ) : (
             <div className='bg-green-00 flex py-3 sm:flex lg:hidden justify-end items-center ml-2 sm:mt-20 sm:justify-start'>
               <p className={`bg-red-00 text-black sm:text-7xl text-5xl ${textColorClass} ${poppins.className}`}>
+
                 {weatherDescription}
               </p>
             </div>
