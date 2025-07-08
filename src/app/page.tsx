@@ -87,9 +87,6 @@ const getWeatherDescription = (
 const getWeatherImage = (description: string, isDaytime: boolean): string => {
   const lowerDescription = description.toLowerCase();
 
-  // let path = '/images/cold.jpg'
-  // let color = 'text-black'
-
   if (isDaytime) {
     if (lowerDescription.includes('sunny') || lowerDescription.includes('clear skies with pleasant temperature')) {
       return '/images/sunny_day.jpg';
@@ -170,8 +167,6 @@ const isDaytime = checkIfDaytime(sunrise, sunset);
 
 const weatherDescription = getWeatherDescription(temp, weatherMain, windSpeed, isDaytime);
 
-// console.log(weatherDescription);
-
 
 export default function Home() {
   const [city, setCity] = useState('');
@@ -208,7 +203,6 @@ export default function Home() {
           const isDay = checkIfDaytime(sunrise, sunset);
           setIsDaytime(isDay);
 
-          // const description = data.weather?.[0]?.description ?? 'No information';
           const description = getWeatherDescription(data.main.temp, data.weather[0].main, data.wind.speed, isDay);
           setWeatherDescription(description);
           const newImagePath = getWeatherImage(description, isDay);
@@ -400,7 +394,6 @@ export default function Home() {
   };
 
 
-
   // Used for current location by GPS
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -505,16 +498,13 @@ export default function Home() {
   // ADDED: New useEffect for handling clicks outside the search container
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // If the click is outside the search container, clear suggestions
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
         setSuggestions([]);
       }
     };
 
-    // Add event listener when component mounts
     document.addEventListener('mousedown', handleClickOutside);
 
-    // Clean up event listener when component unmounts
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -618,7 +608,6 @@ export default function Home() {
           </div>
           <div className='flex flex-col items-end gap-1'>
             <div className='flex justify-between w-full cursor-pointer'>
-              {/* <img src="/star.png" alt="favourites" className='h-4 sm:h-6 lg:h-4 flex sm:block block' /> */}
               {loading ? (
                 <Skeleton className='h-5 w-10 rounded-full' />
               ) : (
