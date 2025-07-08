@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, JSX } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Poppins } from 'next/font/google';
 import Skeleton from 'react-loading-skeleton';
+import { FaHeart } from "react-icons/fa6";
 
 const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
   try {
@@ -83,6 +84,81 @@ const getWeatherDescription = (
 
 };
 
+const getWeatherImage = (description: string, isDaytime: boolean): string => {
+  const lowerDescription = description.toLowerCase();
+
+  // let path = '/images/cold.jpg'
+  // let color = 'text-black'
+
+  if (isDaytime) {
+    if (lowerDescription.includes('sunny') || lowerDescription.includes('clear skies with pleasant temperature')) {
+      return '/images/sunny_day.jpg';
+    }
+    else if (lowerDescription.includes('cloudy') || lowerDescription.includes('overcast') || lowerDescription.includes('cloudy day') || lowerDescription.includes('warm and cloudy') || lowerDescription.includes('cool and cloudy')) {
+      return '/images/cloudy_day.jpg';
+    }
+    if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('hot and stormy') || lowerDescription.includes('stormy with heavy rain')) {
+      return '/images/rainy_day.jpg';
+    }
+    if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
+      return '/images/snowy_day.jpg';
+    }
+    if (lowerDescription.includes('cold')) {
+      return '/images/cold.jpg';
+    }
+    if (lowerDescription.includes('hot')) {
+      return '/images/hot.jpg';
+    }
+    if (lowerDescription.includes('cool wind blowing') || lowerDescription.includes('pleasant and cool') || lowerDescription.includes('typical day with mild conditions')) {
+      return '/images/sunny_day.jpg';
+    }
+  }
+  else {
+    if (lowerDescription.includes('clear night') || lowerDescription.includes('clear and warm night') || lowerDescription.includes('clear night with gentle breeze') || lowerDescription.includes('clear and cool night')) {
+      return '/images/clear_night.jpg';
+    }
+    if (lowerDescription.includes('cloudy night') || lowerDescription.includes('overcast night') || lowerDescription.includes('mild and cloudy night') || lowerDescription.includes('chilly and overcast night') || lowerDescription.includes('cloudy evening')) {
+      return '/images/cloudy_night.jpg';
+    }
+    if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('cold and rainy')) {
+      return '/images/rainy_day.jpg';
+    }
+    if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
+      return '/images/snowy_night.jpg';
+    }
+    if (lowerDescription.includes('cold weather')) {
+      return '/images/snowy_night.jpg';
+    }
+  }
+  if (isDaytime) {
+    return '/images/sunny_day.jpg';
+  } else {
+    return '/images/default_night.jpg';
+  }
+}
+
+const getImageBrightnessCategory = (imagePath: string): 'light' | 'dark' => {
+  if (
+    imagePath.includes('sunny_day.jpg') ||
+    imagePath.includes('cloudy_day.jpg') ||
+    imagePath.includes('cold.jpg') ||
+    imagePath.includes('hot.jpg')
+  ) {
+    return 'light';
+  }
+  if (
+    imagePath.includes('clear_night.jpg') ||
+    imagePath.includes('cloudy_night.jpg') ||
+    imagePath.includes('rainy_night.jpg') ||
+    imagePath.includes('snowy_night.jpg') ||
+    imagePath.includes('rainy_day.jpg')
+  ) {
+    return 'dark';
+  }
+  return 'light';
+}
+
+
 const temp = 27;
 const weatherMain = 'Clear';
 const windSpeed = 5;
@@ -104,7 +180,6 @@ export default function Home() {
   const [time, setTime] = useState<string>('');
   const [date, setDate] = useState<string>('');
   const [is24Hour, setIs24Hour] = useState(false);
-  const [favourites, setFavourites] = useState<string[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [suggestions, setSuggestions] = useState<City[]>([]);
   const [weatherDescription, setWeatherDescription] = useState<string | null>(null);
@@ -112,26 +187,50 @@ export default function Home() {
   const [tempMax, setTempMax] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
   const [personal, setPersonal] = useState<number | null>(null);
+  const [favourites, setFavourites] = useState<string[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isDaytime, setIsDaytime] = useState<boolean>(true);
+  const [weatherImage, setWeatherImage] = useState<string>('/images/sunny_day.jpg');
+  const [textColorClass, setTextColorClass] = useState<string>('text-black');
 
-
+  // ADDED: Create a ref for the search container (input + suggestions)
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function fetchWeather() {
+    async function fetchWeatherForInitialLoad() {
       try {
-
         const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=London&appid=${API_KEY}&units=metric`);
         console.log("Response Status:", res.status);
         const data = await res.json();
 
-        const description = data.weather?.[0]?.description ?? 'No information';
-        setWeatherDescription(description);
+        if (data.cod === 200) {
+          const { sunrise, sunset } = data.sys;
+          const isDay = checkIfDaytime(sunrise, sunset);
+          setIsDaytime(isDay);
+
+          // const description = data.weather?.[0]?.description ?? 'No information';
+          const description = getWeatherDescription(data.main.temp, data.weather[0].main, data.wind.speed, isDay);
+          setWeatherDescription(description);
+          const newImagePath = getWeatherImage(description, isDay);
+          setWeatherImage(newImagePath);
+          const brightnessCategory = getImageBrightnessCategory(newImagePath);
+          setTextColorClass(brightnessCategory === 'dark' ? 'text-white' : 'text-black');
+        } else {
+          setWeatherDescription('No information');
+          const defaultImagePath = '/images/sunny_day.jpg';
+          setWeatherImage(defaultImagePath);
+          setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
+        }
       } catch (error) {
         console.error('Error fetching weather:', error);
         setWeatherDescription('Failed to fetch weather');
+        const defaultImagePath = '/images/sunny_day.jpg';
+        setWeatherImage(defaultImagePath);
+        setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
       }
     }
 
-    fetchWeather();
+    fetchWeatherForInitialLoad();
   }, []);
 
 
@@ -174,14 +273,6 @@ export default function Home() {
     if (stored) setFavourites(JSON.parse(stored));
   }, []);
 
-  const addToFavourites = (city: string) => {
-    if (!favourites.includes(city)) {
-      const updated = [...favourites, city];
-      setFavourites(updated);
-      localStorage.setItem('favourites', JSON.stringify(updated));
-    }
-  };
-
   const fetchWeather = async () => {
     if (!city.trim()) {
       alert('Please enter a city name.');
@@ -213,9 +304,14 @@ export default function Home() {
 
         const { sunrise, sunset } = data.sys;
         const isDay = checkIfDaytime(sunrise, sunset);
+        setIsDaytime(isDay);
 
         const description = getWeatherDescription(data.main.temp, data.weather[0].main, data.wind.speed, isDay);
         setWeatherDescription(description);
+        const newImagePath = getWeatherImage(description, isDay);
+        setWeatherImage(newImagePath);
+        const brightnessCategory = getImageBrightnessCategory(newImagePath);
+        setTextColorClass(brightnessCategory === 'dark' ? 'text-white' : 'text-black')
       } else {
         alert(data.message);
 
@@ -227,12 +323,18 @@ export default function Home() {
           (err) => {
             console.error("Geolocation error (fallback):", err);
             alert("Failed to retrieve your location.");
+            const defaultImagePath = '/images/sunny_day.jpg';
+            setWeatherImage(defaultImagePath);
+            setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
           }
         );
       }
     } catch (error) {
       console.error(error);
       alert("Failed to fetch weather data");
+      const defaultImagePath = '/images/sunny_day.jpg';
+      setWeatherImage(defaultImagePath);
+      setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
     }
     setLoading(false);
   };
@@ -263,6 +365,7 @@ export default function Home() {
 
         const { sunrise, sunset } = data.sys;
         const isDay = checkIfDaytime(sunrise, sunset);
+        setIsDaytime(isDay);
 
         const locationName = await reverseGeocode(lat, lon);
         setCity(locationName);
@@ -275,13 +378,23 @@ export default function Home() {
           isDay
         );
         setWeatherDescription(description);
+        const newImagePath = getWeatherImage(description, isDay);
+        setWeatherImage(newImagePath);
         console.log("This is :", description)
+        const brightnessCategory = getImageBrightnessCategory(newImagePath);
+        setTextColorClass(brightnessCategory === 'dark' ? 'text-white' : 'text-black');
       } else {
         alert(data.message);
+        const defaultImagePath = '/images/sunny_day.jpg';
+        setWeatherImage(defaultImagePath);
+        setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
       }
     } catch (err) {
       console.error(err);
       alert('Failed to fetch weather by location.');
+      const defaultImagePath = '/images/sunny_day.jpg';
+      setWeatherImage(defaultImagePath);
+      setTextColorClass(getImageBrightnessCategory(defaultImagePath) === 'dark' ? 'text-white' : 'text-black');
     }
     setLoading(false);
   };
@@ -368,9 +481,49 @@ export default function Home() {
     console.log("Suggestions updated:", suggestions);
   }, [suggestions]);
 
+
+  // favourites added now
+  useEffect(() => {
+    const saved = localStorage.getItem("favorites");
+    if (saved) {
+      setFavourites(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("favourites", JSON.stringify(favourites));
+  }, [favourites]);
+
+  const addToFavourites = (city: string) => {
+    if (!favourites.includes(city)) {
+      const updated = [...favourites, city];
+      setFavourites(updated);
+      localStorage.setItem('favourites', JSON.stringify(updated));
+    }
+  };
+
+  // ADDED: New useEffect for handling clicks outside the search container
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // If the click is outside the search container, clear suggestions
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setSuggestions([]);
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Clean up event listener when component unmounts
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [searchContainerRef]);
+
+
   return (
     <div className="flex flex-col bg-white w-full h-screen">
-      <nav className="flex justify-between items-center h-12 w-full lg:14 px-2 lg:px-3 pr-1 ">
+      <nav className="flex justify-between items-center h-12 w-full lg:14 px-2 lg:px-3 pr-1">
         <div className="flex gap-x-3 items-center">
           <img src="/cloud.png" alt="cloudimage" className="h-6 w-6 sm:h-8 sm:w-8" />
           <p className={`text-black font-medium text-md sm:text-lg ${poppins.className}`}>
@@ -378,7 +531,8 @@ export default function Home() {
           </p>
         </div>
         <div className={`flex items-center gap-5 text-black cursor-pointer ${poppins.className}`}>
-          <div className="flex lg:flex sm:flex items-center gap-2 px-4 text-sm hidden sm:block lg:block">
+          {/* ADDED: Apply ref here for larger screens */}
+          <div className="flex lg:flex sm:flex items-center gap-2 px-4 text-sm hidden sm:block lg:block" ref={searchContainerRef}>
             <>
               {loading ? (
                 <Skeleton width="80%" height={30} />
@@ -404,6 +558,15 @@ export default function Home() {
                         } else {
                           setSuggestions([]);
                         }
+                      }
+                    }}
+                    // ADDED: onFocus handler to show suggestions when input is focused
+                    onFocus={() => {
+                      if (city.length > 0) {
+                        const filtered = cities.filter((c) =>
+                          c.name.toLowerCase().startsWith(city.toLowerCase())
+                        );
+                        setSuggestions(filtered.slice(0, 10));
                       }
                     }}
                     onKeyDown={(e) => {
@@ -417,7 +580,7 @@ export default function Home() {
                   />
 
                   {suggestions.length > 0 && (
-                    <ul className="absolute top-11 left-220 lg:w-60 lg:left-220 md:left-94 md:w-45 bg-white border border-gray-300 z-50 shadow-lg rounded-md">
+                    <ul className="absolute left-220 lg:w-auto lg:left-220 md:left-94 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
@@ -444,8 +607,9 @@ export default function Home() {
                   onClick={() => {
                     fetchWeather();
                     setCity('');
+                    setSuggestions([]);
                   }}
-                  className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
+                  className={`bg-blue-500 cursor-pointer text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
                 >
                   Search
                 </button>
@@ -453,26 +617,36 @@ export default function Home() {
             </>
           </div>
           <div className='flex flex-col items-end gap-1'>
-            <div className='flex justify-between w-full'>
-              <img src="/star.png" alt="favourites" className='h-4 sm:h-6 lg:h-4 flex sm:block block' />
-              <p className="text-xs flex justify-end hidden lg:flex" onClick={toggleTimeFormat}>{time}</p>
+            <div className='flex justify-between w-full cursor-pointer'>
+              {/* <img src="/star.png" alt="favourites" className='h-4 sm:h-6 lg:h-4 flex sm:block block' /> */}
+              {loading ? (
+                <Skeleton className='h-5 w-10 rounded-full' />
+              ) : (
+                <button className='cursor-pointer'>
+                  <FaHeart />
+                </button>
+              )}
+              <p className="text-xs flex justify-end lg:flex" onClick={toggleTimeFormat}>{time}</p>
             </div>
             <p className="text-[10px] text-sm text-lg">{date}</p>
           </div>
         </div>
       </nav>
-      <div className='flex bg-blue-300 flex-col w-full h-screen'>
-        <div className='relative flex sm:bg-red-00 lg:h-60 flex-col lg:mt-0 pr-2 sm:flex-row items:end sm:justify-between justify-start lg:items-start overflow-hidden'>
-          <div className='bg-green-00 flex lg:w-[85%] sm:flex lg:h-70 lg:flex hidden sm:flex items-center px-2'>
+      <div className='flex bg-blue-300 flex-col w-full h-screen bg-cover bg-center bg-no-repeat' style={{ backgroundImage: `url(${weatherImage} )` }}>
+        <div className='relative flex sm:bg-red-00 lg:h-60 flex-col lg:mt-0 pr-2 sm:flex-col lg:flex-row items:end sm:justify-between justify-start lg:items-start overflow-hidden'>
+          <div className='bg-green-00 flex lg:w-[85%] sm:hidden lg:h-70 lg:flex hidden sm:flex items-center px-2'>
             {loading ? (
               <Skeleton height={200} />
             ) : weather ? (
-              <p className={`text-black lg:text-7xl sm:text-5xl flex flex-wrap ${poppins.className}`}>
-                {weatherDescription}
-              </p>
+              <>
+                <p className={`${textColorClass} lg:text-7xl sm:text-5xl flex flex-wrap ${poppins.className}`}>
+                  {weatherDescription}
+                </p>
+              </>
             ) : null}
           </div>
-          <div className="flex relative w-full bg-red-00 lg:hidden sm:hidden items-center justify-end gap-2 pl-[140px] text-sm py-2">
+          {/* ADDED: Apply ref here for smaller screens */}
+          <div className="flex relative w-full bg-red-00 lg:hidden sm:hidden items-center justify-end gap-2 pl-[140px] text-sm py-2" ref={searchContainerRef}>
             <>
               {loading ? (
                 <Skeleton width="80%" height={30} />
@@ -500,6 +674,15 @@ export default function Home() {
                         }
                       }
                     }}
+                    // ADDED: onFocus handler to show suggestions when input is focused
+                    onFocus={() => {
+                      if (city.length > 0) {
+                        const filtered = cities.filter((c) =>
+                          c.name.toLowerCase().startsWith(city.toLowerCase())
+                        );
+                        setSuggestions(filtered.slice(0, 10));
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         fetchWeather();
@@ -507,11 +690,11 @@ export default function Home() {
                         setSuggestions([]);
                       }
                     }}
-                    className={`border border-gray-500 text-black rounded-lg px-3 py-1 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${poppins.className}`}
+                    className={`border border-gray-500 text-black bg-white rounded-lg px-3 py-1 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${poppins.className}`}
                   />
 
                   {suggestions.length > 0 && (
-                    <ul className={`absolute bg-white text-black top-11 h-auto left-35 lg:w-60 lg:left-220 md:left-94 md:w-45 border border-gray-300 z-50 shadow-lg rounded-md ${poppins.className}`}>
+                    <ul className={`absolute bg-white text-black top-11 h-auto left-[140px] border border-gray-300 z-50 shadow-lg rounded-md ${poppins.className}`}>
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
@@ -530,7 +713,6 @@ export default function Home() {
                   )}
                 </>
               )}
-
               {loading ? (
                 <Skeleton width={80} height={30} />
               ) : (
@@ -538,6 +720,7 @@ export default function Home() {
                   onClick={() => {
                     fetchWeather();
                     setCity('');
+                    setSuggestions([]);
                   }}
                   className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
                 >
@@ -549,21 +732,23 @@ export default function Home() {
           <div className='flex flex-col bg-blue-00 items-end justify-center'>
             <div className='flex w-30 bg-red-00 h-auto sm:w-40 lg:h-30 lg:w-50 mt-5 sm:mt-7 justify-center items-center'>
               {weather && (
-                <p className={`text-6xl sm:text-7xl lg:text-9xl font-normal text-black ${poppins.className}`}>
+                <p className={`text-6xl sm:text-7xl lg:text-9xl font-normal text-black ${textColorClass} ${poppins.className}`}>
                   {Math.round(weather.main.temp)}°
                 </p>
               )}
             </div>
-            <p className={`text-black text-[10px] sm:text-sm ${poppins.className}`}>
+            <p className={`${textColorClass} text-[10px] sm:text-sm ${poppins.className}`}>
               {weather?.name && weather?.sys?.country
                 ? `- ${weather.name}, ${weather.sys.country}`
                 : ""}
             </p>
             <div className='lg:mt-1 sm:mt-1 text-end'>
               {loading ? (
-                <Skeleton height={30} width={40} />
+                <>
+                  <Skeleton height="30px" width="100px" />
+                </>
               ) : (
-                <p className={`text-black text-[6px] lg:text-[10px] sm:text-[8px] ${poppins.className}`}>
+                <p className={`${textColorClass} text-[6px] lg:text-[10px] sm:text-[8px] ${poppins.className}`}>
                   Humidity: {humidity}%
                   <br />
                   WindSpeed: {personal} Km
@@ -574,10 +759,10 @@ export default function Home() {
           {loading ? (
             <Skeleton height={20} width={40} />
           ) : (
-            <div className='bg-green-00 flex px-2 py-3 sm:hidden lg:hidden justify-end items-center ml-2'>
-            <p className={`bg-red-00 text-black text-5xl ${poppins.className}`}>
-              {weatherDescription}
-            </p>
+            <div className='bg-green-00 flex py-3 sm:flex lg:hidden justify-end items-center ml-2 sm:mt-20 sm:justify-start'>
+              <p className={`bg-red-00 text-black sm:text-7xl text-5xl ${textColorClass} ${poppins.className}`}>
+                {weatherDescription}
+              </p>
             </div>
           )}
         </div>
