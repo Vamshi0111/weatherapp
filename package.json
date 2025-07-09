@@ -1,12 +1,15 @@
 {
   "name": "weather_app",
+  "homepage": "https://vamshi0111.github.io/Weather_App",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predeploy": "npm run build && echo > out/.nojekyll",
+    "deploy": "next build && npx gh-pages -d out"
   },
   "dependencies": {
     "@deemlol/next-icons": "^0.1.9",
@@ -16,6 +19,7 @@
     "path": "^0.12.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-loading-skeleton": "^3.5.0"
   },
@@ -26,8 +30,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.4",
     "typescript": "^5"

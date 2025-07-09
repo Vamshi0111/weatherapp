@@ -15,6 +15,51 @@ const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
   }
 };
 
+interface WeatherData {
+  message?: string
+  coord: {
+    lon: number;
+    lat: number;
+  };
+  weather: Array<{
+    id: number;
+    main: string;
+    description: string;
+    icon: string;
+  }>;
+  base: string;
+  main: {
+    temp: number;
+    feels_like: number;
+    temp_min: number;
+    temp_max: number;
+    pressure: number;
+    humidity: number;
+    sea_level?: number;
+    grnd_level?: number;
+  };
+  visibility: number;
+  wind: {
+    speed: number;
+    deg: number;
+    gust?: number;
+  };
+  clouds: {
+    all: number;
+  };
+  dt: number;
+  sys: {
+    type: number;
+    id: number;
+    country: string;
+    sunrise: number;
+    sunset: number;
+  };
+  timezone: number;
+  id: number;
+  name: string;
+  cod: number;
+}
 
 type City = {
   name: string;
@@ -156,21 +201,9 @@ const getImageBrightnessCategory = (imagePath: string): 'light' | 'dark' => {
 }
 
 
-const temp = 27;
-const weatherMain = 'Clear';
-const windSpeed = 5;
-
-const sunrise = 1618300000;
-const sunset = 1618340000;
-
-const isDaytime = checkIfDaytime(sunrise, sunset);
-
-const weatherDescription = getWeatherDescription(temp, weatherMain, windSpeed, isDaytime);
-
-
 export default function Home() {
   const [city, setCity] = useState('');
-  const [weather, setWeather] = useState<any>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [time, setTime] = useState<string>('');
   const [date, setDate] = useState<string>('');
@@ -178,13 +211,12 @@ export default function Home() {
   const [cities, setCities] = useState<City[]>([]);
   const [suggestions, setSuggestions] = useState<City[]>([]);
   const [weatherDescription, setWeatherDescription] = useState<string | null>(null);
-  const [tempMin, setTempMin] = useState<number | null>(null);
-  const [tempMax, setTempMax] = useState<number | null>(null);
+  const [, setTempMin] = useState<number | null>(null);
+  const [, setTempMax] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
   const [personal, setPersonal] = useState<number | null>(null);
   const [favourites, setFavourites] = useState<string[]>([]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isDaytime, setIsDaytime] = useState<boolean>(true);
+  const [, setIsDaytime] = useState<boolean>(true);
   const [weatherImage, setWeatherImage] = useState<string>('/images/sunny_day.jpg');
   const [textColorClass, setTextColorClass] = useState<string>('text-black');
 
@@ -279,7 +311,7 @@ export default function Home() {
       const response = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
       );
-      const data = await response.json();
+      const data: WeatherData = await response.json();
 
       if (data.cod === 200) {
         setWeather(data);
@@ -290,7 +322,7 @@ export default function Home() {
         const tempMin = data.main.temp_min;
         const tempMax = data.main.temp_max;
         console.log(`Low: ${tempMin}°C, High: ${tempMax}°C, Humidity: ${data.main.humidity}, Windspeed: ${data.wind.speed.toFixed(2)}`);
-        const personal = setPersonal(data.wind.speed);
+        setPersonal(data.wind.speed);
 
         setWeather(data);
         setTempMin(data.main.temp_min);
@@ -307,7 +339,7 @@ export default function Home() {
         const brightnessCategory = getImageBrightnessCategory(newImagePath);
         setTextColorClass(brightnessCategory === 'dark' ? 'text-white' : 'text-black')
       } else {
-        alert(data.message);
+        alert(data.message)
 
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -342,7 +374,7 @@ export default function Home() {
       const response = await fetch(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
       );
-      const data = await response.json();
+      const data: WeatherData = await response.json();
       if (data.cod === 200) {
         setWeather(data);
         setHumidity(data.main.humidity);
@@ -352,7 +384,7 @@ export default function Home() {
         const tempMin = data.main.temp_min;
         const tempMax = data.main.temp_max;
         console.log(`Low: ${tempMin}°C, High: ${tempMax}°C, Humidity: ${data.main.humidity}, Windspeed: ${data.wind.speed}`);
-        const personal = setPersonal(data.wind.speed);
+        setPersonal(data.wind.speed);
 
         setTempMin(data.main.temp_min);
         setTempMax(data.main.temp_max);
@@ -487,13 +519,13 @@ export default function Home() {
     localStorage.setItem("favourites", JSON.stringify(favourites));
   }, [favourites]);
 
-  const addToFavourites = (city: string) => {
-    if (!favourites.includes(city)) {
-      const updated = [...favourites, city];
-      setFavourites(updated);
-      localStorage.setItem('favourites', JSON.stringify(updated));
-    }
-  };
+  // const addToFavourites = (city: string) => {
+  //   if (!favourites.includes(city)) {
+  //     const updated = [...favourites, city];
+  //     setFavourites(updated);
+  //     localStorage.setItem('favourites', JSON.stringify(updated));
+  //   }
+  // };
 
   // ADDED: New useEffect for handling clicks outside the search container
   useEffect(() => {
