@@ -1,15 +1,16 @@
 {
-  "name": "weather_app",
-  "homepage": "https://vamshi0111.github.io/Weather_App",
+  "name": "weatherapp",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://Vamshi0111.github.io/weatherapp",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && echo > out/.nojekyll",
     "start": "next start",
+    "export": "next export",
     "lint": "next lint",
     "predeploy": "npm run build && echo > out/.nojekyll",
-    "deploy": "next build && npx gh-pages -d out"
+    "deploy": "npx gh-pages -d out"
   },
   "dependencies": {
     "@deemlol/next-icons": "^0.1.9",

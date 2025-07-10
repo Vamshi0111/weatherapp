@@ -76,7 +76,6 @@ const poppins = Poppins({
 
 const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
 
-
 const checkIfDaytime = (sunrise: number, sunset: number): boolean => {
   const now = Date.now() / 1000;
   console.log(`Now: ${now}, Sunrise: ${sunrise}, Sunset: ${sunset}`);
@@ -129,77 +128,6 @@ const getWeatherDescription = (
 
 };
 
-const getWeatherImage = (description: string, isDaytime: boolean): string => {
-  const lowerDescription = description.toLowerCase();
-
-  if (isDaytime) {
-    if (lowerDescription.includes('sunny') || lowerDescription.includes('clear skies with pleasant temperature')) {
-      return '/images/sunny_day.jpg';
-    }
-    else if (lowerDescription.includes('cloudy') || lowerDescription.includes('overcast') || lowerDescription.includes('cloudy day') || lowerDescription.includes('warm and cloudy') || lowerDescription.includes('cool and cloudy')) {
-      return '/images/cloudy_day.jpg';
-    }
-    if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('hot and stormy') || lowerDescription.includes('stormy with heavy rain')) {
-      return '/images/rainy_day.jpg';
-    }
-    if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
-      return '/images/snowy_day.jpg';
-    }
-    if (lowerDescription.includes('cold')) {
-      return '/images/cold.jpg';
-    }
-    if (lowerDescription.includes('hot')) {
-      return '/images/hot.jpg';
-    }
-    if (lowerDescription.includes('cool wind blowing') || lowerDescription.includes('pleasant and cool') || lowerDescription.includes('typical day with mild conditions')) {
-      return '/images/sunny_day.jpg';
-    }
-  }
-  else {
-    if (lowerDescription.includes('clear night') || lowerDescription.includes('clear and warm night') || lowerDescription.includes('clear night with gentle breeze') || lowerDescription.includes('clear and cool night')) {
-      return '/images/clear_night.jpg';
-    }
-    if (lowerDescription.includes('cloudy night') || lowerDescription.includes('overcast night') || lowerDescription.includes('mild and cloudy night') || lowerDescription.includes('chilly and overcast night') || lowerDescription.includes('cloudy evening')) {
-      return '/images/cloudy_night.jpg';
-    }
-    if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('cold and rainy')) {
-      return '/images/rainy_day.jpg';
-    }
-    if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
-      return '/images/snowy_night.jpg';
-    }
-    if (lowerDescription.includes('cold weather')) {
-      return '/images/snowy_night.jpg';
-    }
-  }
-  if (isDaytime) {
-    return '/images/sunny_day.jpg';
-  } else {
-    return '/images/default_night.jpg';
-  }
-}
-
-const getImageBrightnessCategory = (imagePath: string): 'light' | 'dark' => {
-  if (
-    imagePath.includes('sunny_day.jpg') ||
-    imagePath.includes('cloudy_day.jpg') ||
-    imagePath.includes('cold.jpg') ||
-    imagePath.includes('hot.jpg')
-  ) {
-    return 'light';
-  }
-  if (
-    imagePath.includes('clear_night.jpg') ||
-    imagePath.includes('cloudy_night.jpg') ||
-    imagePath.includes('rainy_night.jpg') ||
-    imagePath.includes('snowy_night.jpg') ||
-    imagePath.includes('rainy_day.jpg')
-  ) {
-    return 'dark';
-  }
-  return 'light';
-}
-
 
 export default function Home() {
   const [city, setCity] = useState('');
@@ -217,8 +145,104 @@ export default function Home() {
   const [personal, setPersonal] = useState<number | null>(null);
   const [favourites, setFavourites] = useState<string[]>([]);
   const [, setIsDaytime] = useState<boolean>(true);
-  const [weatherImage, setWeatherImage] = useState<string>('/images/sunny_day.jpg');
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  const [weatherImage, setWeatherImage] = useState(`${basePath}/images/sunny_day.jpg`);
   const [textColorClass, setTextColorClass] = useState<string>('text-black');
+
+  const getWeatherImage = (description: string, isDaytime: boolean): string => {
+    const lowerDescription = description.toLowerCase();
+
+    if (isDaytime) {
+      if (lowerDescription.includes('sunny') || lowerDescription.includes('clear skies with pleasant temperature')) {
+        return `${basePath}/images/sunny_day.jpg`;
+        // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('cloudy') || lowerDescription.includes('overcast') || lowerDescription.includes('cloudy day') || lowerDescription.includes('warm and cloudy') || lowerDescription.includes('cool and cloudy')) {
+        return `${basePath}/images/cloudy_day.jpg`;
+        // setWeatherImage(`${basePath}/images/cloudy_day.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('hot and stormy') || lowerDescription.includes('stormy with heavy rain')) {
+        return `${basePath}/images/rainy_day.jpg`;
+        // setWeatherImage(`${basePath}/images/rainy_day.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
+        return `${basePath}/images/snowy_day.jpg`;
+        // setWeatherImage(`${basePath}/images/snowy_day.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('cold')) {
+        return `${basePath}/images/cold.jpg`;
+        // setWeatherImage(`${basePath}/images/cold.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('hot')) {
+        return `${basePath}/images/hot.jpg`;
+        // setWeatherImage(`${basePath}/images/hot.jpg`);
+        return ''
+      }
+      if (lowerDescription.includes('cool wind blowing') || lowerDescription.includes('pleasant and cool') || lowerDescription.includes('typical day with mild conditions')) {
+        return `${basePath}/images/sunny_day.jpg`;
+        // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
+        return ''
+      }
+    }
+    else {
+      if (lowerDescription.includes('clear night') || lowerDescription.includes('clear and warm night') || lowerDescription.includes('clear night with gentle breeze') || lowerDescription.includes('clear and cool night')) {
+        return `${basePath}/images/clear_night.jpg`;
+        // setWeatherImage(`${basePath}/images/clear_night.jpg`);
+      }
+      if (lowerDescription.includes('cloudy night') || lowerDescription.includes('overcast night') || lowerDescription.includes('mild and cloudy night') || lowerDescription.includes('chilly and overcast night') || lowerDescription.includes('cloudy evening')) {
+        return `${basePath}/images/cloudy_night.jpg`;
+        // setWeatherImage(`${basePath}/images/cloudy_night.jpg`);
+      }
+      if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('cold and rainy')) {
+        return `${basePath}/images/rainy_day.jpg`;
+        // setWeatherImage(`${basePath}/images/rainy_day.jpg`);
+      }
+      if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
+        return `${basePath}/images/snowy_night.jpg`;
+        // setWeatherImage(`${basePath}/images/snowy_night.jpg`);
+      }
+      if (lowerDescription.includes('cold weather')) {
+        return `${basePath}/images/snowy_night.jpg`;
+        // setWeatherImage(`${basePath}/images/snowy_night.jpg`);
+      }
+    }
+    if (isDaytime) {
+      return `${basePath}/images/sunny_day.jpg`;
+      // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
+      return ''
+    } else {
+      return `${basePath}/images/clear_night.jpg`;
+      // setWeatherImage(`${basePath}/images/clear_night.jpg`);
+      return ''
+    }
+  }
+
+  const getImageBrightnessCategory = (imagePath: string): 'light' | 'dark' => {
+    if (
+      imagePath.includes('sunny_day.jpg') ||
+      imagePath.includes('cloudy_day.jpg') ||
+      imagePath.includes('cold.jpg') ||
+      imagePath.includes('hot.jpg')
+    ) {
+      return 'light';
+    }
+    if (
+      imagePath.includes('clear_night.jpg') ||
+      imagePath.includes('cloudy_night.jpg') ||
+      imagePath.includes('rainy_night.jpg') ||
+      imagePath.includes('snowy_night.jpg') ||
+      imagePath.includes('rainy_day.jpg')
+    ) {
+      return 'dark';
+    }
+    return 'light';
+  }
+
 
   // ADDED: Create a ref for the search container (input + suggestions)
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -495,8 +519,12 @@ export default function Home() {
 
 
   useEffect(() => {
-    fetch('/cities.json')
-      .then((res) => res.json())
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH_CITIES || '';
+    fetch(`${basePath}/cities.json`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Http error! status: ${res.status}`)
+        return res.json()
+      })
       .then((data: City[]) => setCities(data))
       .catch((err) => console.error('Failed to load cities.json', err));
   }, []);
@@ -541,12 +569,13 @@ export default function Home() {
     };
   }, [searchContainerRef]);
 
+  const IMAGE_BASE_PATH = process.env.NEXT_PUBLIC_CUSTOM_IMAGE_BASE_PATH || '';
 
   return (
     <div className="flex flex-col bg-white w-full h-screen">
       <nav className="flex justify-between items-center h-12 w-full lg:14 px-2 lg:px-3 pr-1">
         <div className="flex gap-x-3 items-center">
-          <img src="/cloud.png" alt="cloudimage" className="h-6 w-6 sm:h-8 sm:w-8" />
+          <img src={`${IMAGE_BASE_PATH}/cloud.png`} alt='cloud image' className="h-6 w-6 sm:h-8 sm:w-8" />
           <p className={`text-black font-medium text-md sm:text-lg ${poppins.className}`}>
             Climate check
           </p>
@@ -601,7 +630,7 @@ export default function Home() {
                   />
 
                   {suggestions.length > 0 && (
-                    <ul className="absolute left-220 lg:w-auto lg:left-220 md:left-94 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
+                    <ul className="absolute left-220 lg:w-auto lg:left-219 md:left-94 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
