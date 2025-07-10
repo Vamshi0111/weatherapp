@@ -155,70 +155,47 @@ export default function Home() {
     if (isDaytime) {
       if (lowerDescription.includes('sunny') || lowerDescription.includes('clear skies with pleasant temperature')) {
         return `${basePath}/images/sunny_day.jpg`;
-        // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
-        return ''
       }
       if (lowerDescription.includes('cloudy') || lowerDescription.includes('overcast') || lowerDescription.includes('cloudy day') || lowerDescription.includes('warm and cloudy') || lowerDescription.includes('cool and cloudy')) {
         return `${basePath}/images/cloudy_day.jpg`;
-        // setWeatherImage(`${basePath}/images/cloudy_day.jpg`);
-        return ''
       }
       if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('hot and stormy') || lowerDescription.includes('stormy with heavy rain')) {
         return `${basePath}/images/rainy_day.jpg`;
-        // setWeatherImage(`${basePath}/images/rainy_day.jpg`);
-        return ''
       }
       if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
         return `${basePath}/images/snowy_day.jpg`;
-        // setWeatherImage(`${basePath}/images/snowy_day.jpg`);
-        return ''
       }
       if (lowerDescription.includes('cold')) {
         return `${basePath}/images/cold.jpg`;
-        // setWeatherImage(`${basePath}/images/cold.jpg`);
-        return ''
       }
       if (lowerDescription.includes('hot')) {
         return `${basePath}/images/hot.jpg`;
-        // setWeatherImage(`${basePath}/images/hot.jpg`);
-        return ''
       }
       if (lowerDescription.includes('cool wind blowing') || lowerDescription.includes('pleasant and cool') || lowerDescription.includes('typical day with mild conditions')) {
         return `${basePath}/images/sunny_day.jpg`;
-        // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
-        return ''
       }
     }
     else {
       if (lowerDescription.includes('clear night') || lowerDescription.includes('clear and warm night') || lowerDescription.includes('clear night with gentle breeze') || lowerDescription.includes('clear and cool night')) {
         return `${basePath}/images/clear_night.jpg`;
-        // setWeatherImage(`${basePath}/images/clear_night.jpg`);
       }
       if (lowerDescription.includes('cloudy night') || lowerDescription.includes('overcast night') || lowerDescription.includes('mild and cloudy night') || lowerDescription.includes('chilly and overcast night') || lowerDescription.includes('cloudy evening')) {
         return `${basePath}/images/cloudy_night.jpg`;
-        // setWeatherImage(`${basePath}/images/cloudy_night.jpg`);
       }
       if (lowerDescription.includes('rain') || lowerDescription.includes('stormy') || lowerDescription.includes('cold and rainy')) {
         return `${basePath}/images/rainy_day.jpg`;
-        // setWeatherImage(`${basePath}/images/rainy_day.jpg`);
       }
       if (lowerDescription.includes('snow') || lowerDescription.includes('snowy and freezing')) {
         return `${basePath}/images/snowy_night.jpg`;
-        // setWeatherImage(`${basePath}/images/snowy_night.jpg`);
       }
       if (lowerDescription.includes('cold weather')) {
         return `${basePath}/images/snowy_night.jpg`;
-        // setWeatherImage(`${basePath}/images/snowy_night.jpg`);
       }
     }
     if (isDaytime) {
       return `${basePath}/images/sunny_day.jpg`;
-      // setWeatherImage(`${basePath}/images/sunny_day.jpg`);
-      return ''
     } else {
       return `${basePath}/images/clear_night.jpg`;
-      // setWeatherImage(`${basePath}/images/clear_night.jpg`);
-      return ''
     }
   }
 
