@@ -300,8 +300,10 @@ export default function Home() {
     if (stored) setFavourites(JSON.parse(stored));
   }, []);
 
-  const fetchWeather = async () => {
-    if (!city.trim()) {
+  const fetchWeather = async (cityName: string | null = null) => { // Accept cityName as argument
+    const cityToFetch = cityName || city; // Use argument if provided, else use state
+
+    if (!cityToFetch.trim()) {
       alert('Please enter a city name.');
       return;
     }
@@ -310,7 +312,7 @@ export default function Home() {
 
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+        `https://api.openweathermap.org/data/2.5/weather?q=${cityToFetch}&units=metric&appid=${API_KEY}`
       );
       const data: WeatherData = await response.json();
 
@@ -325,7 +327,6 @@ export default function Home() {
         console.log(`Low: ${tempMin}°C, High: ${tempMax}°C, Humidity: ${data.main.humidity}, Windspeed: ${data.wind.speed.toFixed(2)}`);
         setPersonal(data.wind.speed);
 
-        setWeather(data);
         setTempMin(data.main.temp_min);
         setTempMax(data.main.temp_max);
 
@@ -339,9 +340,14 @@ export default function Home() {
         setWeatherImage(newImagePath);
         const brightnessCategory = getImageBrightnessCategory(newImagePath);
         setTextColorClass(brightnessCategory === 'dark' ? 'text-white' : 'text-black')
+
+        // Clear the city input AFTER successful fetch and state updates
+        setCity('');
+
       } else {
         alert(data.message)
 
+        // Fallback to geolocation if city not found
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const { latitude, longitude } = pos.coords;
@@ -396,7 +402,7 @@ export default function Home() {
 
         const locationName = await reverseGeocode(lat, lon);
         setCity(locationName);
-        setCity('');
+        setCity(''); // This one can remain here as it's for current location and you likely want to clear the input after getting location name
 
         const description = getWeatherDescription(
           data.main.temp,
@@ -559,7 +565,7 @@ export default function Home() {
         </div>
         <div className={`flex items-center gap-5 text-black cursor-pointer ${poppins.className}`}>
           {/* ADDED: Apply ref here for larger screens */}
-          <div className="flex lg:flex sm:flex items-center gap-2 px-4 text-sm hidden sm:block lg:block" ref={searchContainerRef}>
+          <div className="flex items-center gap-2 px-4 text-sm hidden lg:top-[42px] sm:flex lg:flex" ref={searchContainerRef}>
             <>
               {loading ? (
                 <Skeleton width="80%" height={30} />
@@ -567,8 +573,9 @@ export default function Home() {
                 <>
                   <input
                     type="text"
-                    placeholder="Search for a city..."
+                    placeholder="Full city required..."
                     value={city}
+                    style={{ zIndex: 100 }}
                     autoComplete="off"
                     onChange={(e) => {
                       const value = e.target.value;
@@ -598,24 +605,25 @@ export default function Home() {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        fetchWeather();
-                        setCity('');
+                        fetchWeather(city); // Pass the current city value
                         setSuggestions([]);
                       }
                     }}
                     className={`border border-gray-500 rounded-lg px-3 py-1 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${poppins.className}`}
                   />
-
                   {suggestions.length > 0 && (
                     <ul className="absolute left-220 lg:w-auto lg:left-219 md:left-94 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
                           onClick={() => {
-                            setCity(suggestion.name);
+                            const selected = suggestion.name
+                            setCity('');
+                            setTimeout(() => {
+                              setCity(selected);
+                              fetchWeather(selected);
+                            }, 0);
                             setSuggestions([]);
-                            fetchWeather();
-                            setCity('')
                           }}
                           className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
                         >
@@ -626,14 +634,12 @@ export default function Home() {
                   )}
                 </>
               )}
-
               {loading ? (
                 <Skeleton width={80} height={30} />
               ) : (
                 <button
                   onClick={() => {
-                    fetchWeather();
-                    setCity('');
+                    fetchWeather(city); // Pass the current city value
                     setSuggestions([]);
                   }}
                   className={`bg-blue-500 cursor-pointer text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
@@ -711,24 +717,21 @@ export default function Home() {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        fetchWeather();
-                        setCity('');
+                        fetchWeather(city); // Pass the current city value
                         setSuggestions([]);
                       }
                     }}
                     className={`border border-gray-500 text-black bg-white rounded-lg px-3 py-1 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${poppins.className}`}
                   />
-
                   {suggestions.length > 0 && (
                     <ul className={`absolute bg-white text-black top-11 h-auto left-[140px] border border-gray-300 z-50 shadow-lg rounded-md ${poppins.className}`}>
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
                           onClick={() => {
-                            setCity(suggestion.name);
-                            setSuggestions([]);
-                            fetchWeather();
-                            setCity('')
+                            setCity(suggestion.name); // Set the city in input field
+                            setSuggestions([]); // Clear suggestions
+                            fetchWeather(suggestion.name); // Fetch weather for the selected city
                           }}
                           className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
                         >
@@ -744,8 +747,7 @@ export default function Home() {
               ) : (
                 <button
                   onClick={() => {
-                    fetchWeather();
-                    setCity('');
+                    fetchWeather(city); // Pass the current city value
                     setSuggestions([]);
                   }}
                   className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
