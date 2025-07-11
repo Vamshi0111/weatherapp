@@ -612,7 +612,7 @@ export default function Home() {
                     className={`border border-gray-500 rounded-lg px-3 py-1 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 ${poppins.className}`}
                   />
                   {suggestions.length > 0 && (
-                    <ul className="absolute left-220 lg:w-auto lg:left-219 md:left-94 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
+                    <ul className="absolute left-220 lg:w-auto lg:left-222 md:left-96 md:h-auto md:top-[42px] md:w-auto bg-white border border-gray-300 z-50 shadow-lg rounded-md">
                       {suggestions.map((suggestion, idx) => (
                         <li
                           key={idx}
@@ -625,7 +625,7 @@ export default function Home() {
                             }, 0);
                             setSuggestions([]);
                           }}
-                          className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                          className="px-4 py-2 hover:bg-blue-200 cursor-pointer"
                         >
                           {suggestion.name}, {suggestion.country}
                         </li>
@@ -747,7 +747,7 @@ export default function Home() {
               ) : (
                 <button
                   onClick={() => {
-                    fetchWeather(city); // Pass the current city value
+                    fetchWeather(city);
                     setSuggestions([]);
                   }}
                   className={`bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-all text-xs ${poppins.className}`}
